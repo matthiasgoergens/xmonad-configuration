@@ -1,6 +1,9 @@
 import XMonad
 import XMonad.Config.Gnome
 import System.Exit
+import XMonad.Actions.UpdatePointer
+import XMonad.Hooks.DynamicLog
+import XMonad.Util.Run
  
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
@@ -8,13 +11,29 @@ import qualified Data.Map        as M
 myTerminal      = "gnome-terminal"
 myModMask       = mod4Mask
  
-defaults = defaultConfig
+defaults h = defaultConfig
            -- simple stuff
            { terminal           = myTerminal
            , modMask            = myModMask
+--           , logHook = updatePointer (Relative 0.5 0.5)
+           , logHook = updatePointer (Relative 0.5 0.5)  -- $ defaultPP { ppOutput = hPutStrLn h }
            }
 
-main = xmonad defaults
+
+-- myLogHook = dynamicLogWithPP .... 
+
+-- logHook = 
+
+-- main = dzen $ \conf -> xmonad $ conf defaults
+
+
+--main = xmonad defaults
+
+main = do
+--  h <- spawnPipe "xmobar -options -foo -bar"
+  spawn "gedit"
+  xmonad $ defaults undefined
+
 
 -- myKeys x -- conf@(XConfig {XMonad.modMask = modMask, workspaces = ws})
 --     = M.fromList $
