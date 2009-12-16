@@ -9,12 +9,12 @@ import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
  
 myTerminal      = "gnome-terminal"
-myModMask       = mod4Mask
+myModMask       = mod5Mask
  
-defaults h = defaultConfig
+defaults = defaultConfig
            -- simple stuff
            { terminal           = myTerminal
-           , modMask            = myModMask
+--           , modMask            = myModMask
 --           , logHook = updatePointer (Relative 0.5 0.5)
            , logHook = updatePointer (Relative 0.5 0.5)  -- $ defaultPP { ppOutput = hPutStrLn h }
            }
@@ -30,10 +30,11 @@ defaults h = defaultConfig
 --main = xmonad defaults
 
 main = do
---  h <- spawnPipe "xmobar -options -foo -bar"
-  spawn "gedit"
-  xmonad $ defaults undefined
+--  spawn "beep"
 
+  xmonad $ defaults
+
+--  h <- spawnPipe "xmobar -options -foo -bar"
 
 -- myKeys x -- conf@(XConfig {XMonad.modMask = modMask, workspaces = ws})
 --     = M.fromList $
@@ -44,4 +45,7 @@ main = do
 -- --      , ((0, xK_F2  ), spawn "beep") -- %! Launch gnome-terminal
 
 --       ]
+
+
+
 
