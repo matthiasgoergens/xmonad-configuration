@@ -4,6 +4,7 @@ import System.Exit
 import XMonad.Actions.UpdatePointer
 import XMonad.Hooks.DynamicLog
 import XMonad.Util.Run
+import XMonad.Layout.NoBorders
  
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
@@ -15,37 +16,23 @@ defaults = defaultConfig
            -- simple stuff
            { terminal           = myTerminal
 --           , modMask            = myModMask
---           , logHook = updatePointer (Relative 0.5 0.5)
            , logHook = updatePointer (Relative 0.5 0.5)  -- $ defaultPP { ppOutput = hPutStrLn h }
+--           , manageHook  = myManageHook
+           , layoutHook = smartBorders $ layoutHook defaultConfig
+           , modMask = mod4Mask
            }
 
+-- Define the workspace an application has to go to
+myManageHook = composeAll . concat $
+            [  -- The applications that float
+               [ className =? i --> doFloat | i <- myClassFloats]
+            ]
+		where
+		  myClassFloats	      = ["xvncviewer"]
 
--- myLogHook = dynamicLogWithPP .... 
 
--- logHook = 
-
--- main = dzen $ \conf -> xmonad $ conf defaults
-
-
---main = xmonad defaults
 
 main = do
---  spawn "beep"
-
   xmonad $ defaults
 
---  h <- spawnPipe "xmobar -options -foo -bar"
-
--- myKeys x -- conf@(XConfig {XMonad.modMask = modMask, workspaces = ws})
---     = M.fromList $
---       [-- ((modMask x, xK_1), spawn "setxkbmap dvorak")
--- --      , ((modMask x, xK_2), spawn "setxkbmap de")
---        ((modMask x, xK_F2), spawn "beep")
---       , ((modMask x, xK_F3), spawn "gedit")
--- --      , ((0, xK_F2  ), spawn "beep") -- %! Launch gnome-terminal
-
---       ]
-
-
-
-
+ 
