@@ -21,9 +21,17 @@ import XMonad.Layout.MosaicAlt
 import XMonad.Layout.HintedTile
 import XMonad.Layout.Spiral
 
+import XMonad.Actions.WithAll
+
+modm = mod4Mask
+
+--modm = XMonad.modMask
+
 defaults = defaultConfig
            { terminal           = "gnome-terminal"
-           , logHook = updatePointer (Relative 0.5 0.5)  -- $ defaultPP { ppOutput = hPutStrLn h }
+           -- In xmonad focus follows mouse, this line also makes mouse follow focus:
+           , logHook = updatePointer (Relative 0.5 0.5)
+           -- $ defaultPP { ppOutput = hPutStrLn h }
            , manageHook  = myManageHook
            , layoutHook = noBorders Full
                           ||| smartBorders
@@ -35,7 +43,10 @@ defaults = defaultConfig
                           )
              
 -- smartBorders $ layoutHook defaultConfig
+
+-- make mod := left Windows key
            , modMask = mod4Mask
+           , keys = newKeys
            }
            `additionalKeysP`
            [ ("<XF86AudioRaiseVolume>", spawn "setxkbmap dvorak")
@@ -48,6 +59,10 @@ defaults = defaultConfig
           ratio      = 1/2
           delta      = 3/100
 
+-- pushes all floating windows back into tiling with mod-shift-t:
+myKeys conf@(XConfig {XMonad.modMask = modm}) =
+    [((modm .|. shiftMask, xK_t), sinkAll)]
+newKeys x  = M.union (keys defaultConfig x) (M.fromList (myKeys x))
 
 -- Define the workspace an application has to go to
 myManageHook = (className =? "rdesktop" --> doF (W.shift "6")) <+> manageHook defaultConfig
