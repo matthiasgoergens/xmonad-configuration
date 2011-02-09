@@ -1,4 +1,4 @@
-import XMonad hiding (Tall)
+import XMonad
 import qualified XMonad as X
 import XMonad.Config.Gnome
 import System.Exit
@@ -18,7 +18,7 @@ import XMonad.Layout.HintedGrid
 import XMonad.Layout.Tabbed
 import XMonad.Layout.Accordion
 import XMonad.Layout.MosaicAlt
-import XMonad.Layout.HintedTile
+import XMonad.Layout.HintedTile hiding (Tall)
 import XMonad.Layout.Spiral
 
 import XMonad.Actions.WithAll
@@ -27,22 +27,32 @@ modm = mod4Mask
 
 --modm = XMonad.modMask
 
+myLayout = noBorders Full ||| MosaicAlt M.empty ||| noBorders (tabbed shrinkText defaultTheme) ||| tiled ||| Mirror tiled 
+  where tiled = Tall nmaster delta ratio
+        nmaster = 1
+        ratio = 1/2
+        delta = 3/100
+
+             -- smartBorders (layoutHook defaultConfig)
+
+--                           noBorders Full
+--                           ||| smartBorders
+--                           (MosaicAlt M.empty
+--                            ||| Mirror (MosaicAlt M.empty)
+--                            ||| noBorders (tabbed shrinkText defaultTheme)
+-- --                           ||| Mirror (spiral (6/7))
+-- --                           ||| tiled ||| Mirror tiled
+--                           )
+             
+-- smartBorders $ layoutHook defaulConfig
+
 defaults = defaultConfig
            { terminal           = "gnome-terminal"
            -- In xmonad focus follows mouse, this line also makes mouse follow focus:
            , logHook = updatePointer (Relative 0.5 0.5)
            -- $ defaultPP { ppOutput = hPutStrLn h }
            , manageHook  = myManageHook
-           , layoutHook = noBorders Full
-                          ||| smartBorders
-                          (MosaicAlt M.empty
-                           ||| Mirror (MosaicAlt M.empty)
-                           ||| noBorders (tabbed shrinkText defaultTheme)
---                           ||| Mirror (spiral (6/7))
---                           ||| tiled ||| Mirror tiled
-                          )
-             
--- smartBorders $ layoutHook defaultConfig
+           , layoutHook = myLayout
 
 -- make mod := left Windows key
            , modMask = mod4Mask
@@ -59,7 +69,7 @@ defaults = defaultConfig
           ratio      = 1/2
           delta      = 3/100
 
--- pushes all floating windows back into tiling with mod-shift-t:
+-- pushes all floating win3dows back into tiling with mod-shift-t:
 myKeys conf@(XConfig {XMonad.modMask = modm}) =
     [((modm .|. shiftMask, xK_t), sinkAll)]
 newKeys x  = M.union (keys defaultConfig x) (M.fromList (myKeys x))
