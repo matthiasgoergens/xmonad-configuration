@@ -1,0 +1,4 @@
+#!/bin/bash
+cd build-space
+stack install
+ln -sf $(which xmonad) ~/.xmonad/xmonad-x86_64-linux

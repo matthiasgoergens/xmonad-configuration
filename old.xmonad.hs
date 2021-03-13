@@ -16,12 +16,12 @@ import XMonad.Util.EZConfig
 
 import XMonad.Layout.HintedGrid
 import XMonad.Layout.Tabbed
-import XMonad.Layout.Accordion
-import XMonad.Layout.MosaicAlt
-import XMonad.Layout.HintedTile hiding (Tall)
-import XMonad.Layout.Spiral
+-- import XMonad.Layout.Accordion
+-- import XMonad.Layout.MosaicAlt
+-- import XMonad.Layout.HintedTile hiding (Tall)
+-- import XMonad.Layout.Spiral
 
-import XMonad.Actions.WithAll
+-- import XMonad.Actions.WithAll
 
 modm = mod4Mask
 
