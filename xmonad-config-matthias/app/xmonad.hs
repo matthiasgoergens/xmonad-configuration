@@ -21,6 +21,8 @@ import XMonad.Layout.MosaicAlt
 -- import XMonad.Layout.Spiral
 import XMonad.Actions.SinkAll (sinkAll)
 
+import XMonad.Hooks.EwmhDesktops
+
 -- import XMonad.Actions.WithAll
 
 modm = mod4Mask
@@ -56,6 +58,8 @@ defaults = def
           -- make mod := left Windows key
            , modMask = mod4Mask
            , keys = newKeys
+          --  , handleEventHook =
+          --     handleEventHook def <+> ewmhFullscreen 
            }
     -- default tiling algorithm partitions the screen into two panes
     -- The default number of windows in the master pane
@@ -84,4 +88,4 @@ myManageHook = (className =? "rdesktop" --> doF (W.shift "6")) <+> manageHook de
 
 main = do
   spawn "setxkbmap -option terminate:ctrl_alt_bksp"
-  xmonad defaults
+  xmonad $ ewmhFullscreen defaults
