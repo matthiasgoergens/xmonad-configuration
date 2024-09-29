@@ -4,7 +4,8 @@
 # For advanced use and comprehensive documentation of the format, please see:
 # https://docs.haskellstack.org/en/stable/yaml_configuration/
 
-resolver: lts-20.20
+# resolver: lts-22.35
+resolver: nightly-2024-09-26
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -27,6 +28,8 @@ packages:
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
 # extra-deps: []
+# extra-deps:
+# - xmonad-contrib-0.17.1@sha256:df50cc15569c0bb4bc79cd031f7283f20760ae453887785f4689ab09ecb28935,21951
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
