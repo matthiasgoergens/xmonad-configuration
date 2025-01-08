@@ -28,6 +28,8 @@ dependencies:
 
 default-extensions:
 - ImportQualifiedPost
+- ScopedTypeVariables
+- PartialTypeSignatures
 
 
 library:

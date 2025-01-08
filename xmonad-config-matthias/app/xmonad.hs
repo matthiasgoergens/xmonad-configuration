@@ -72,10 +72,10 @@ showAllScreensPopup = do
         def
           { ppCurrent = wrap "[" "]",
             ppVisible = id,
-            ppHidden = id,
-            ppHiddenNoWindows = id,
-            ppTitle = const "", -- Don't show window titles
-            ppSep = " "
+            ppHidden = const "",
+            ppHiddenNoWindows = const ""
+            -- ppTitle = const "", -- Don't show window titles
+            -- ppSep = " "
           }
   -- 2. Grab the current workspace info string
   wsString <- dynamicLogString pp
@@ -90,11 +90,13 @@ showAllScreensPopup = do
         scrY = fromIntegral $ rect_y scrRect
         scrW = fromIntegral $ rect_width scrRect
         scrH = fromIntegral $ rect_height scrRect
+        S id_ = W.screen scr
+        w = W.tag $ W.workspace scr
 
     -- 4. Desired dzen2 window width/height
-    let popupWidth = 400
+    let popupWidth = 100
         popupHeight = 50
-        displayTime = 1 -- seconds to remain visible
+        displayTime = 2 -- seconds to remain visible
 
     -- 5. Calculate the centered coordinates
     let xPos = scrX + (scrW `div` 2) - (popupWidth `div` 2)
@@ -105,8 +107,10 @@ showAllScreensPopup = do
       "bash"
       [ "-c",
         unwords
-          [ "echo '" ++ wsString ++ "' |",
+          -- [ "echo '" ++ show id_ ++ "$" ++ w ++ "' |",
+          [ "echo '" ++ w ++ "' |",
             "dzen2"
+              -- ++ "-xs" ++ show id_
               ++ " -p "
               ++ show displayTime
               ++ " -x "
