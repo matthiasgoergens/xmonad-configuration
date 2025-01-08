@@ -8,6 +8,7 @@ import XMonad.Util.Run         (spawnPipe, safeSpawn, runProcessWithInput)
 import qualified XMonad.StackSet as W
 import qualified Data.Map        as M
 import Data.Default (def)
+import Data.Foldable
 
 -- For additionalKeysP,
 -- but that does not seem to work with AudioRaiseVolume and LowerVolume (yet?)
@@ -55,7 +56,7 @@ defaults = def
 -- pushes all floating windows back into tiling with mod-shift-t:
 myKeys conf@XConfig {XMonad.modMask = modm} =
     [((modm .|. shiftMask, xK_t), sinkAll)
-    , ((modm, xK_s), showCenteredWorkspacePopup)
+    , ((modm, xK_s), showAllScreensPopup)
     ]
 newKeys x  = M.union (keys def x) (M.fromList (myKeys x))
 
@@ -66,52 +67,52 @@ main = do
   spawn "setxkbmap -option terminate:ctrl_alt_bksp"
   xmonad $ ewmhFullscreen . ewmh $ defaults
 
-showCenteredWorkspacePopup :: X ()
-showCenteredWorkspacePopup = do
+showAllScreensPopup :: X ()
+showAllScreensPopup = do
     -- 1. Create a 'PP' for how you want to format workspace info
     let pp = def
              { ppCurrent         = wrap "[" "]"
              , ppVisible         = id
              , ppHidden          = id
              , ppHiddenNoWindows = id
-             , ppTitle           = const ""   -- Don't show window titles
+             , ppTitle           = const ""  -- Don't show window titles
              , ppSep             = " "
              }
-
     -- 2. Grab the current workspace info string
     wsString <- dynamicLogString pp
 
     -- 3. Get screen geometry from XMonad
-    winset   <- gets windowset
-    let screenDetail = W.screenDetail (W.current winset)
-        rect         = screenRect screenDetail
-        scrX         = fromIntegral (rect_x rect)
-        scrY         = fromIntegral (rect_y rect)
-        scrW         = fromIntegral (rect_width rect)
-        scrH         = fromIntegral (rect_height rect)
+    winset <- gets windowset
 
-    -- 4. Desired dzen2 window width/height
-    let popupWidth   = 400
-        popupHeight  = 50
-        displayTime  = 2      -- seconds to remain visible
+    -- For each screen in W.screens, spawn a dzen2 in the center
+    forM_ (W.screens winset) $ \scr -> do
+        let scrRect = screenRect (W.screenDetail scr)
+            scrX    = fromIntegral $ rect_x scrRect
+            scrY    = fromIntegral $ rect_y scrRect
+            scrW    = fromIntegral $ rect_width scrRect
+            scrH    = fromIntegral $ rect_height scrRect
 
-    -- 5. Calculate the centered coordinates
-    let xPos = scrX + (scrW `div` 2) - (popupWidth  `div` 2)
-        yPos = scrY + (scrH `div` 2) - (popupHeight `div` 2)
+        -- 4. Desired dzen2 window width/height
+        let popupWidth  = 400
+            popupHeight = 50
+            displayTime  = 1      -- seconds to remain visible
 
-    -- 6. Spawn dzen2 in the center
-    -- Using safeSpawn (from XMonad.Util.Run)
-    safeSpawn "bash"
-      [ "-c"
-      , unwords
-          [ "echo '" ++ wsString ++ "' |"
-          , "dzen2"
-            ++ " -p " ++ show displayTime
-            ++ " -x " ++ show xPos
-            ++ " -y " ++ show yPos
-            ++ " -w " ++ show popupWidth
-            ++ " -h " ++ show popupHeight
-            ++ " -fn 'Monospace-9'"
-            ++ " -bg '#222222' -fg '#ffffff'"
+        -- 5. Calculate the centered coordinates
+        let xPos = scrX + (scrW `div` 2) - (popupWidth  `div` 2)
+            yPos = scrY + (scrH `div` 2) - (popupHeight `div` 2)
+
+        -- 6. Spawn dzen2 in the center
+        safeSpawn "bash"
+          [ "-c"
+          , unwords
+              [ "echo '" ++ wsString ++ "' |"
+              , "dzen2"
+                ++ " -p " ++ show displayTime
+                ++ " -x " ++ show xPos
+                ++ " -y " ++ show yPos
+                ++ " -w " ++ show popupWidth
+                ++ " -h " ++ show popupHeight
+                ++ " -fn 'Monospace-30'"
+                ++ " -bg '#222222' -fg '#ffffff'"
+              ]
           ]
-      ]
