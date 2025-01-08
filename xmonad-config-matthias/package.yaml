@@ -26,6 +26,10 @@ dependencies:
 - containers
 - data-default
 
+default-extensions:
+- ImportQualifiedPost
+
+
 library:
   source-dirs: src
 
