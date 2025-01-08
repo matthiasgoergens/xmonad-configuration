@@ -2,7 +2,6 @@ import XMonad
 import qualified XMonad as X
 import XMonad.Actions.UpdatePointer ( updatePointer )
 import XMonad.Hooks.DynamicLog
--- import XMonad.Util.Run
 import XMonad.Layout.NoBorders ( noBorders )
 
 import qualified XMonad.StackSet as W
@@ -15,39 +14,21 @@ import XMonad.Util.EZConfig
 
 import XMonad.Layout.HintedGrid
 import XMonad.Layout.Tabbed
--- import XMonad.Layout.Accordion
 import XMonad.Layout.MosaicAlt
--- import XMonad.Layout.HintedTile hiding (Tall)
--- import XMonad.Layout.Spiral
 import XMonad.Actions.SinkAll (sinkAll)
 
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Util.Hacks (fixSteamFlicker)
 
--- import XMonad.Actions.WithAll
 
 modm = mod4Mask
 
---modm = XMonad.modMask
 
 myLayout = noBorders Full ||| MosaicAlt M.empty ||| noBorders (tabbed shrinkText def) ||| tiled ||| Mirror tiled 
   where tiled = Tall nmaster delta ratio
         nmaster = 1
         ratio = 1/2
         delta = 3/100
-
-             -- smartBorders (layoutHook defaultConfig)
-
---                           noBorders Full
---                           ||| smartBorders
---                           (MosaicAlt M.empty
---                            ||| Mirror (MosaicAlt M.empty)
---                            ||| noBorders (tabbed shrinkText defaultTheme)
--- --                           ||| Mirror (spiral (6/7))
--- --                           ||| tiled ||| Mirror tiled
---                           )
-             
--- smartBorders $ layoutHook defaulConfig
 
 defaults = def
            { terminal           = "terminator"
@@ -77,16 +58,6 @@ newKeys x  = M.union (keys def x) (M.fromList (myKeys x))
 
 -- Define the workspace an application has to go to
 myManageHook = (className =? "rdesktop" --> doF (W.shift "6")) <+> manageHook def
-               -- composeAll . concat $
---            [  -- The applications that float
-            --   [ className =? i --> doFloat | i <- myClassFloats]
---              [
---            ]
---		where
---		  myClassFloats	      = ["xvncviewer"]
-
-
--- main = xmonad . ewmh =<< statusBar myBar myPP toggleStrutsKey defaults
 
 main = do
   spawn "setxkbmap -option terminate:ctrl_alt_bksp"
