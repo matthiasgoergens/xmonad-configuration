@@ -53,7 +53,11 @@ defaults =
 -- pushes all floating windows back into tiling with mod-shift-t:
 myKeys conf@XConfig {XMonad.modMask = modm} =
   [ ((modm .|. shiftMask, xK_t), sinkAll),
-    ((modm, xK_s), showAllScreensPopup)
+    ((modm, xK_s), showAllScreensPopup),
+    -- Screenshots (saved under ~/Desktop/screenshot, see ~/.local/bin/screenshot):
+    ((noModMask, xK_Print), spawn "~/.local/bin/screenshot window"),
+    ((shiftMask, xK_Print), spawn "~/.local/bin/screenshot select"),
+    ((controlMask, xK_Print), spawn "~/.local/bin/screenshot full")
   ]
 
 newKeys x = M.union (keys def x) (M.fromList (myKeys x))
