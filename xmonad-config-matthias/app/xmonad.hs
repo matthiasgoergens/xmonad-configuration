@@ -33,6 +33,8 @@ defaults =
     { terminal = "terminator",
       -- In xmonad focus follows mouse, this line also makes mouse follow focus:
       logHook = updatePointer (0.5, 0.5) (0, 0), -- (Relative 0.5 0.5)
+      -- Pass the click that focuses a window on to it, instead of swallowing it:
+      clickJustFocuses = False,
       manageHook = myManageHook,
       layoutHook = myLayout,
       -- make mod := left Windows key
