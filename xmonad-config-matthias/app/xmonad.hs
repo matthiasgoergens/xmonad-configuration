@@ -54,6 +54,8 @@ defaults =
 myKeys conf@XConfig {XMonad.modMask = modm} =
   [ ((modm .|. shiftMask, xK_t), sinkAll),
     ((modm, xK_s), showAllScreensPopup),
+    -- Re-apply the monitor layout after (un)plugging a display (see ~/.local/bin/screen-layout):
+    ((modm .|. shiftMask, xK_s), spawn "~/.local/bin/screen-layout"),
     -- Screenshots (saved under ~/Desktop/screenshot, see ~/.local/bin/screenshot):
     ((noModMask, xK_Print), spawn "~/.local/bin/screenshot window"),
     ((shiftMask, xK_Print), spawn "~/.local/bin/screenshot select"),
