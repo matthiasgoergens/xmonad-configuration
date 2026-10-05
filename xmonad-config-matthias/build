@@ -1,4 +1,12 @@
 #!/bin/bash
 cd build-space
+# On machines without system X11 -dev packages, `pkgs` unpacks the headers into
+# ~/.local/xdev.  X11's configure script only looks at the compiler's search paths,
+# not at Stack's extra-include-dirs.
+xdev=$HOME/.local/xdev/usr
+if [ -d "$xdev" ]; then
+  export C_INCLUDE_PATH=$xdev/include${C_INCLUDE_PATH:+:$C_INCLUDE_PATH}
+  export LIBRARY_PATH=$xdev/lib/x86_64-linux-gnu${LIBRARY_PATH:+:$LIBRARY_PATH}
+fi
 stack install
 ln -sf $(which xmonad) ~/.xmonad/xmonad-x86_64-linux
