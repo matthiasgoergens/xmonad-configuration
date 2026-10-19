@@ -35,7 +35,6 @@ defaults =
       logHook = updatePointer (0.5, 0.5) (0, 0), -- (Relative 0.5 0.5)
       -- Pass the click that focuses a window on to it, instead of swallowing it:
       clickJustFocuses = False,
-      manageHook = myManageHook,
       layoutHook = myLayout,
       -- make mod := left Windows key
       modMask = mod4Mask,
@@ -65,9 +64,6 @@ myKeys conf@XConfig {XMonad.modMask = modm} =
   ]
 
 newKeys x = M.union (keys def x) (M.fromList (myKeys x))
-
--- Define the workspace an application has to go to
-myManageHook = (className =? "rdesktop" --> doF (W.shift "6")) <+> manageHook def
 
 main = do
   spawn "setxkbmap -option terminate:ctrl_alt_bksp"
