@@ -71,6 +71,8 @@ myKeys conf@XConfig {XMonad.modMask = modm} =
     ((modm .|. shiftMask, xK_Down), moveWindowToScreen D),
     -- Re-apply the monitor layout after (un)plugging a display (see ~/.local/bin/screen-layout):
     ((modm .|. shiftMask, xK_s), spawn "~/.local/bin/screen-layout"),
+    -- Lock the screen (xss-lock.service hands it to xsecurelock):
+    ((modm .|. shiftMask, xK_l), spawn "loginctl lock-session"),
     -- Screenshots (saved under ~/Desktop/screenshot, see ~/.local/bin/screenshot):
     ((noModMask, xK_Print), spawn "~/.local/bin/screenshot window"),
     ((shiftMask, xK_Print), spawn "~/.local/bin/screenshot select"),
