@@ -73,8 +73,8 @@ myKeys conf@XConfig {XMonad.modMask = modm} =
     ((modm .|. shiftMask, xK_Down), moveWindowToScreen D),
     -- Move the workspaces up/down within each column of monitors (with two rows, both
     -- swap the rows), or one monitor clockwise (left) / counter-clockwise (right):
-    ((modm .|. controlMask, xK_Up), shuffleScreens (inColumns (-1))),
-    ((modm .|. controlMask, xK_Down), shuffleScreens (inColumns 1)),
+    ((modm .|. controlMask, xK_Up), rotateColumns (-1)),
+    ((modm .|. controlMask, xK_Down), rotateColumns 1),
     ((modm .|. controlMask, xK_Left), shuffleScreens (aroundRing 1)),
     ((modm .|. controlMask, xK_Right), shuffleScreens (aroundRing (-1))),
     -- Re-apply the monitor layout (see ~/.local/bin/screen-layout), wait for it, then have
@@ -111,13 +111,38 @@ warpToFocus = do
     Just _ -> warpToWindow 0.5 0.5
     Nothing -> warpToScreen (W.screen (W.current ws)) 0.5 0.5
 
+-- Move the workspaces along each column, then focus the bottom-row screen of the
+-- column the focus started in.  The bottom row is the lowest row with more than
+-- one screen, so the laptop panel under the left column does not count.
+rotateColumns :: Int -> X ()
+rotateColumns k = do
+  ws <- gets windowset
+  let scrs = W.current ws : W.visible ws
+      column = rect_x (screenRectOf (W.current ws))
+      inColumn = filter ((== column) . rect_x . screenRectOf) scrs
+      rows = groupBy ((==) `on` (rect_y . screenRectOf)) (sortOn (rect_y . screenRectOf) scrs)
+      bottomRow = case filter ((> 1) . length) rows of
+        [] -> scrs
+        shared -> last shared
+      target = case filter ((== column) . rect_x . screenRectOf) bottomRow of
+        t : _ -> Just t
+        [] -> case sortOn (rect_y . screenRectOf) inColumn of
+          [] -> Nothing
+          lowest -> Just (last lowest)
+  windows (shuffle (inColumns k))
+  whenJust target $ \t -> screenWorkspace (W.screen t) >>= flip whenJust (windows . W.view)
+  warpToFocus
+
 type WScreen = W.Screen WorkspaceId (Layout Window) Window ScreenId ScreenDetail
 
 -- Move workspaces between monitors.  The plan maps each screen to the screen whose
 -- workspace it should show (screens it leaves out keep theirs).  The focused
 -- workspace keeps the focus wherever it lands, and the pointer follows it.
 shuffleScreens :: ([WScreen] -> M.Map ScreenId ScreenId) -> X ()
-shuffleScreens plan = (>> warpToFocus) . windows $ \ws ->
+shuffleScreens plan = windows (shuffle plan) >> warpToFocus
+
+shuffle :: ([WScreen] -> M.Map ScreenId ScreenId) -> WindowSet -> WindowSet
+shuffle plan ws =
   let scrs = W.current ws : W.visible ws
       from = plan scrs
       onScreen = M.fromList [(W.screen s, W.workspace s) | s <- scrs]
