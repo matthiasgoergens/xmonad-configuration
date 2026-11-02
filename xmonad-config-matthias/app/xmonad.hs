@@ -69,8 +69,10 @@ myKeys conf@XConfig {XMonad.modMask = modm} =
     ((modm .|. shiftMask, xK_Right), moveWindowToScreen R),
     ((modm .|. shiftMask, xK_Up), moveWindowToScreen U),
     ((modm .|. shiftMask, xK_Down), moveWindowToScreen D),
-    -- Re-apply the monitor layout after (un)plugging a display (see ~/.local/bin/screen-layout):
-    ((modm .|. shiftMask, xK_s), spawn "~/.local/bin/screen-layout"),
+    -- Re-apply the monitor layout (see ~/.local/bin/screen-layout), wait for it, then have
+    -- xmonad reread the screens: it notices changes by itself only when the size of the
+    -- whole X screen changes, not when a monitor moves or is rescaled within it.
+    ((modm .|. shiftMask, xK_s), runProcessWithInput "screen-layout" [] "" >> rescreen),
     -- Lock the screen (xss-lock.service hands it to xsecurelock):
     ((modm .|. shiftMask, xK_l), spawn "loginctl lock-session"),
     -- Screenshots (saved under ~/Desktop/screenshot, see ~/.local/bin/screenshot):
