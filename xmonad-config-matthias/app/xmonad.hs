@@ -1,12 +1,13 @@
 import Data.Default (def)
 import Data.Foldable
+import Data.Function (on)
+import Data.List (groupBy, sortOn)
 import Data.Map qualified as M
 import XMonad
 import XMonad qualified as X
 import XMonad.Actions.Navigation2D (screenGo, windowToScreen)
-import XMonad.Actions.UpdateFocus (focusUnderPointer)
 import XMonad.Actions.UpdatePointer (updatePointer)
-import XMonad.Actions.Warp (warpToScreen)
+import XMonad.Actions.Warp (warpToScreen, warpToWindow)
 -- For additionalKeysP,
 -- but that does not seem to work with AudioRaiseVolume and LowerVolume (yet?)
 
@@ -59,16 +60,23 @@ defaults =
 myKeys conf@XConfig {XMonad.modMask = modm} =
   [ ((modm .|. shiftMask, xK_t), sinkAll),
     ((modm, xK_s), showAllScreensPopup),
-    -- Focus the monitor to the left/right/above/below and put the pointer at its centre:
-    ((modm, xK_Left), focusScreenAndWarp L),
-    ((modm, xK_Right), focusScreenAndWarp R),
-    ((modm, xK_Up), focusScreenAndWarp U),
-    ((modm, xK_Down), focusScreenAndWarp D),
+    -- Focus the monitor to the left/right/above/below, with the pointer on the window
+    -- focused there (the one mod-w/e/r would pick):
+    ((modm, xK_Left), screenGo L False >> warpToFocus),
+    ((modm, xK_Right), screenGo R False >> warpToFocus),
+    ((modm, xK_Up), screenGo U False >> warpToFocus),
+    ((modm, xK_Down), screenGo D False >> warpToFocus),
     -- Move the focused window to the monitor in that direction; focus and pointer follow it:
     ((modm .|. shiftMask, xK_Left), moveWindowToScreen L),
     ((modm .|. shiftMask, xK_Right), moveWindowToScreen R),
     ((modm .|. shiftMask, xK_Up), moveWindowToScreen U),
     ((modm .|. shiftMask, xK_Down), moveWindowToScreen D),
+    -- Move the workspaces up/down within each column of monitors (with two rows, both
+    -- swap the rows), or one monitor clockwise (left) / counter-clockwise (right):
+    ((modm .|. controlMask, xK_Up), shuffleScreens (inColumns (-1))),
+    ((modm .|. controlMask, xK_Down), shuffleScreens (inColumns 1)),
+    ((modm .|. controlMask, xK_Left), shuffleScreens (aroundRing 1)),
+    ((modm .|. controlMask, xK_Right), shuffleScreens (aroundRing (-1))),
     -- Re-apply the monitor layout (see ~/.local/bin/screen-layout), wait for it, then have
     -- xmonad reread the screens: it notices changes by itself only when the size of the
     -- whole X screen changes, not when a monitor moves or is rescaled within it.
@@ -83,24 +91,73 @@ myKeys conf@XConfig {XMonad.modMask = modm} =
 
 newKeys x = M.union (keys def x) (M.fromList (myKeys x))
 
--- Focus the monitor next to the current one in the given direction (if there is
--- one) and warp the pointer to that monitor's centre.  Then focus the window
--- under the pointer: otherwise the crossing events from the warp refocus another
--- window and updatePointer in the logHook drags the pointer onto it.
-focusScreenAndWarp :: Direction2D -> X ()
-focusScreenAndWarp dir = do
-  screenGo dir False
-  sid <- gets (W.screen . W.current . windowset)
-  warpToScreen sid 0.5 0.5
-  focusUnderPointer
-
 -- Send the focused window to the monitor next to the current one in the given
--- direction, then focus that monitor: the window arrives focused, and
--- updatePointer in the logHook puts the pointer on it.
+-- direction, then focus that monitor: the window arrives focused, with the
+-- pointer on it.
 moveWindowToScreen :: Direction2D -> X ()
 moveWindowToScreen dir = do
   windowToScreen dir False
   screenGo dir False
+  warpToFocus
+
+-- Put the pointer in the middle of the focused window, or of the current screen
+-- if it has no windows.  updatePointer in the logHook does not do it after a
+-- change of screen: it leaves the pointer alone while it is over a window of
+-- another screen's workspace.
+warpToFocus :: X ()
+warpToFocus = do
+  ws <- gets windowset
+  case W.peek ws of
+    Just _ -> warpToWindow 0.5 0.5
+    Nothing -> warpToScreen (W.screen (W.current ws)) 0.5 0.5
+
+type WScreen = W.Screen WorkspaceId (Layout Window) Window ScreenId ScreenDetail
+
+-- Move workspaces between monitors.  The plan maps each screen to the screen whose
+-- workspace it should show (screens it leaves out keep theirs).  The focused
+-- workspace keeps the focus wherever it lands, and the pointer follows it.
+shuffleScreens :: ([WScreen] -> M.Map ScreenId ScreenId) -> X ()
+shuffleScreens plan = (>> warpToFocus) . windows $ \ws ->
+  let scrs = W.current ws : W.visible ws
+      from = plan scrs
+      onScreen = M.fromList [(W.screen s, W.workspace s) | s <- scrs]
+      source s = M.findWithDefault (W.screen s) (W.screen s) from
+      moved = [s {W.workspace = M.findWithDefault (W.workspace s) (source s) onScreen} | s <- scrs]
+      focused = W.currentTag ws
+   in case break ((== focused) . W.tag . W.workspace) moved of
+        (before, cur : after) -> ws {W.current = cur, W.visible = before ++ after}
+        _ -> ws
+
+-- Each screen in the list takes the workspace of the screen k places before it
+-- (cyclically), so the workspaces move k places along the list.
+takeFrom :: Int -> [ScreenId] -> M.Map ScreenId ScreenId
+takeFrom _ [] = M.empty
+takeFrom k xs = M.fromList (zip xs (drop (negate k `mod` length xs) (cycle xs)))
+
+screenRectOf :: WScreen -> Rectangle
+screenRectOf = screenRect . W.screenDetail
+
+-- Columns are the screens sharing a left edge, ordered top to bottom; the
+-- workspaces move k places down each column (negative k: up).
+inColumns :: Int -> [WScreen] -> M.Map ScreenId ScreenId
+inColumns k scrs =
+  M.unions
+    [ takeFrom k (map W.screen (sortOn (rect_y . screenRectOf) column))
+      | column <- groupBy ((==) `on` (rect_x . screenRectOf)) (sortOn (rect_x . screenRectOf) scrs)
+    ]
+
+-- The ring orders screens clockwise by the angle of their centre around the
+-- mean of all centres; the workspaces move k places clockwise (negative k:
+-- counter-clockwise).
+aroundRing :: Int -> [WScreen] -> M.Map ScreenId ScreenId
+aroundRing k scrs = takeFrom k (map W.screen (sortOn angle scrs))
+  where
+    centre s = let Rectangle x y w h = screenRectOf s in (fromIntegral x + fromIntegral w / 2, fromIntegral y + fromIntegral h / 2) :: (Double, Double)
+    n = fromIntegral (length scrs)
+    cx = sum (map (fst . centre) scrs) / n
+    cy = sum (map (snd . centre) scrs) / n
+    -- y grows downwards, so increasing atan2 runs clockwise on the screen
+    angle s = let (x, y) = centre s in atan2 (y - cy) (x - cx)
 
 main = do
   spawn "setxkbmap -option terminate:ctrl_alt_bksp"
