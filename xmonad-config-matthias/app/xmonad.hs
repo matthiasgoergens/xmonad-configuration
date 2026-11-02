@@ -3,7 +3,8 @@ import Data.Foldable
 import Data.Map qualified as M
 import XMonad
 import XMonad qualified as X
-import XMonad.Actions.Navigation2D (screenGo)
+import XMonad.Actions.Navigation2D (screenGo, windowToScreen)
+import XMonad.Actions.UpdateFocus (focusUnderPointer)
 import XMonad.Actions.UpdatePointer (updatePointer)
 import XMonad.Actions.Warp (warpToScreen)
 -- For additionalKeysP,
@@ -63,6 +64,11 @@ myKeys conf@XConfig {XMonad.modMask = modm} =
     ((modm, xK_Right), focusScreenAndWarp R),
     ((modm, xK_Up), focusScreenAndWarp U),
     ((modm, xK_Down), focusScreenAndWarp D),
+    -- Move the focused window to the monitor in that direction; focus and pointer follow it:
+    ((modm .|. shiftMask, xK_Left), moveWindowToScreen L),
+    ((modm .|. shiftMask, xK_Right), moveWindowToScreen R),
+    ((modm .|. shiftMask, xK_Up), moveWindowToScreen U),
+    ((modm .|. shiftMask, xK_Down), moveWindowToScreen D),
     -- Re-apply the monitor layout after (un)plugging a display (see ~/.local/bin/screen-layout):
     ((modm .|. shiftMask, xK_s), spawn "~/.local/bin/screen-layout"),
     -- Screenshots (saved under ~/Desktop/screenshot, see ~/.local/bin/screenshot):
@@ -74,13 +80,23 @@ myKeys conf@XConfig {XMonad.modMask = modm} =
 newKeys x = M.union (keys def x) (M.fromList (myKeys x))
 
 -- Focus the monitor next to the current one in the given direction (if there is
--- one) and warp the pointer to that monitor's centre.  The warp comes after the
--- focus change, so it wins over updatePointer in the logHook.
+-- one) and warp the pointer to that monitor's centre.  Then focus the window
+-- under the pointer: otherwise the crossing events from the warp refocus another
+-- window and updatePointer in the logHook drags the pointer onto it.
 focusScreenAndWarp :: Direction2D -> X ()
 focusScreenAndWarp dir = do
   screenGo dir False
   sid <- gets (W.screen . W.current . windowset)
   warpToScreen sid 0.5 0.5
+  focusUnderPointer
+
+-- Send the focused window to the monitor next to the current one in the given
+-- direction, then focus that monitor: the window arrives focused, and
+-- updatePointer in the logHook puts the pointer on it.
+moveWindowToScreen :: Direction2D -> X ()
+moveWindowToScreen dir = do
+  windowToScreen dir False
+  screenGo dir False
 
 main = do
   spawn "setxkbmap -option terminate:ctrl_alt_bksp"
